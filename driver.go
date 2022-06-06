@@ -1,6 +1,5 @@
 package main
 
-import "C"
 import (
 	"encoding/json"
 	"fmt"
@@ -44,16 +43,14 @@ type Options struct {
 }
 
 //export http_req
-func http_req(f_ptr *C.char, f_len uint32, opt_ptr *C.char, o_len uint32, fd *uint32) uint32 {
-	var slice = (*byte)(unsafe.Pointer(f_ptr))
-	var url_slice = unsafe.Slice(slice, f_len)
+func http_req(f_ptr *byte, f_len uint32, opt_ptr *byte, o_len uint32, fd *uint32) uint32 {
+	var url_slice = unsafe.Slice(f_ptr, f_len)
 	var loc_url = string(url_slice)
 	var req *http.Request
 	var resp *http.Response
 	var err error
 
-	slice = (*byte)(unsafe.Pointer(opt_ptr))
-	var opts_slice = unsafe.Slice(slice, o_len)
+	var opts_slice = unsafe.Slice(opt_ptr, o_len)
 	var options Options
 	if err := json.Unmarshal(opts_slice, &options); err != nil {
 		fmt.Fprintf(os.Stderr, "error format params: %s", string(opts_slice))
@@ -77,9 +74,8 @@ func http_req(f_ptr *C.char, f_len uint32, opt_ptr *C.char, o_len uint32, fd *ui
 }
 
 //export http_read_body
-func http_read_body(fd uint32, p *C.char, len uint32, retn *uint32) uint32 {
-	var slice = (*byte)(unsafe.Pointer(p))
-	var bs = unsafe.Slice(slice, len)
+func http_read_body(fd uint32, p *byte, len uint32, retn *uint32) uint32 {
+	var bs = unsafe.Slice(p, len)
 
 	var ctx *InnerContext = Context[fd]
 	if ctx == nil {
@@ -102,9 +98,21 @@ func http_read_body(fd uint32, p *C.char, len uint32, retn *uint32) uint32 {
 	}
 }
 
-//export http_read_head
-func http_read_head(fd uint32, b *C.char, len uint32, retn *uint32) uint32 {
-
+//export http_read_header
+func http_read_header(fd uint32, h_ptr *byte, h_len uint32, buf_ptr *byte, buf_len uint32, retn *uint32) uint32 {
+	var header = string(unsafe.Slice(h_ptr, h_len))
+	var buf = unsafe.Slice(buf_ptr, buf_len)
+	var ctx *InnerContext = Context[fd]
+	if ctx == nil {
+		return INVALID_HANDLE
+	}
+	headVal := ctx.resp.Request.Header.Get(header)
+	if headVal == "" {
+		return HEADER_NOT_FOUND
+	}
+	headValBuf := []byte(headVal)
+	n := copy(buf, headValBuf)
+	*retn = uint32(n)
 	return SUCCESS
 }
 
@@ -114,7 +122,6 @@ func http_close(fd uint32) uint32 {
 	if ctx == nil {
 		return INVALID_HANDLE
 	}
-
 	if ctx.resp != nil {
 		ctx.resp.Body.Close()
 	}
