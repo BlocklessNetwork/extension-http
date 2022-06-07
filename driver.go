@@ -76,9 +76,11 @@ func http_req(f_ptr *byte, f_len uint32, opt_ptr *byte, o_len uint32, fd *uint32
 }
 
 //export http_read_body
-func http_read_body(fd uint32, p *byte, len uint32, retn *uint32) uint32 {
-	var bs = unsafe.Slice(p, len)
-
+func http_read_body(fd uint32, p *byte, l uint32, retn *uint32) uint32 {
+	if l == 0 {
+		return BUFFER_TOO_SMALL
+	}
+	var bs []byte = unsafe.Slice(p, l)
 	var ctx *InnerContext = Context[fd]
 	if ctx == nil {
 		return INVALID_HANDLE
