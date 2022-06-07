@@ -1,5 +1,6 @@
 package main
 
+import "C"
 import (
 	"encoding/json"
 	"fmt"
@@ -12,7 +13,7 @@ import (
 type ErrType uint32
 
 const (
-	SUCCESS uint32 = 0
+	SUCCESS uint32 = iota
 	INVALID_HANDLE
 	MEMORY_ACCESS_ERROR
 	BUFFER_TOO_SMALL
@@ -25,6 +26,7 @@ const (
 	REQUEST_ERROR
 	RUNTIME_ERROR
 	TOO_MANY_SESSIONS
+	INVALID_DRIVER
 )
 
 type InnerContext struct {
