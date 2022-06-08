@@ -104,6 +104,9 @@ func http_read_body(fd uint32, p *byte, l uint32, retn *uint32) uint32 {
 
 //export http_read_header
 func http_read_header(fd uint32, h_ptr *byte, h_len uint32, buf_ptr *byte, buf_len uint32, retn *uint32) uint32 {
+	if buf_len == 0 {
+		return BUFFER_TOO_SMALL
+	}
 	var header = string(unsafe.Slice(h_ptr, h_len))
 	var buf = unsafe.Slice(buf_ptr, buf_len)
 	var ctx *InnerContext = Context[fd]
