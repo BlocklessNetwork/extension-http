@@ -45,7 +45,7 @@ type Options struct {
 }
 
 //export http_req
-func http_req(f_ptr *byte, f_len uint32, opt_ptr *byte, o_len uint32, fd *uint32) uint32 {
+func http_req(f_ptr *byte, f_len uint32, opt_ptr *byte, o_len uint32, fd *uint32, code *uint32) uint32 {
 	var url_slice = unsafe.Slice(f_ptr, f_len)
 	var loc_url = string(url_slice)
 	var req *http.Request
@@ -72,6 +72,7 @@ func http_req(f_ptr *byte, f_len uint32, opt_ptr *byte, o_len uint32, fd *uint32
 	}
 	Context[MaxSeq] = &InnerContext{req, resp}
 	*fd = MaxSeq
+	*code = uint32(resp.StatusCode)
 	return SUCCESS
 }
 
