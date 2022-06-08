@@ -114,7 +114,7 @@ func http_read_header(fd uint32, h_ptr *byte, h_len uint32, buf_ptr *byte, buf_l
 	if ctx == nil {
 		return INVALID_HANDLE
 	}
-	headVal := ctx.resp.Request.Header.Get(header)
+	headVal := ctx.resp.Header.Get(header)
 	if headVal == "" {
 		return HEADER_NOT_FOUND
 	}
