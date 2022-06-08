@@ -2,6 +2,7 @@ package main
 
 import "C"
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -42,6 +43,7 @@ type Options struct {
 	Method         string `json:"method"`
 	ConnectTimeout int32  `json:"connectTimeout"`
 	ReadTimeout    int32  `json:"readTimeout"`
+	Body           string `json:"body"`
 }
 
 //export http_req
@@ -58,7 +60,11 @@ func http_req(f_ptr *byte, f_len uint32, opt_ptr *byte, o_len uint32, fd *uint32
 		fmt.Fprintf(os.Stderr, "error format params: %s", string(opts_slice))
 		return REQUEST_ERROR
 	}
-	if req, err = http.NewRequest(options.Method, loc_url, nil); err != nil {
+	var body io.Reader
+	if options.Body != "" {
+		body = bytes.NewBuffer([]byte(options.Body))
+	}
+	if req, err = http.NewRequest(options.Method, loc_url, body); err != nil {
 		fmt.Fprintf(os.Stderr, "new request error: %s\n", err)
 		return REQUEST_ERROR
 	} else {
