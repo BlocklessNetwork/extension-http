@@ -1,8 +1,9 @@
-# Blockless-extension-http
+# Blockless HTTP Extension
 
 ![](blockless.png)
 
-This this example of blockless driver write by golang. And the driver also support rust, c/c++ and others.
+The HTTP extension is written in Go. The extension also supports rust, c/c++, among other languages.
+
 ## How to build
 ```
 $ go build go build -buildmode=c-shared -ldflags "-s -w" -o http_driver.so  
