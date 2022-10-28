@@ -44,6 +44,7 @@ type Options struct {
 	ConnectTimeout int32  `json:"connectTimeout"`
 	ReadTimeout    int32  `json:"readTimeout"`
 	Body           string `json:"body"`
+	Headers        string `json:"headers"`
 }
 
 //export http_req
@@ -64,10 +65,22 @@ func http_req(f_ptr *byte, f_len uint32, opt_ptr *byte, o_len uint32, fd *uint32
 	if options.Body != "" {
 		body = bytes.NewBuffer([]byte(options.Body))
 	}
+	var headers map[string]string
+	if options.Headers != "" {
+		if err := json.Unmarshal([]byte(options.Headers), &headers); err != nil {
+			fmt.Fprintf(os.Stderr, "error format headers: %s", string(options.Headers))
+			return REQUEST_ERROR
+		}
+	}
 	if req, err = http.NewRequest(options.Method, loc_url, body); err != nil {
 		fmt.Fprintf(os.Stderr, "new request error: %s\n", err)
 		return REQUEST_ERROR
 	} else {
+		// Set HTTP Headers
+		for k, v := range headers {
+			req.Header.Add(k, v)
+		}
+		
 		if resp, err = http.DefaultClient.Do(req); err != nil {
 			fmt.Fprintf(os.Stderr, "do request error: %s\n", err)
 			return REQUEST_ERROR
