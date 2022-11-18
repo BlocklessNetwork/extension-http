@@ -32,7 +32,7 @@ jobs:
         with:
           go-version: "1.18"
           check-latest: true
-      - run: env GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -buildmode=c-shared -ldflags "-s -w" -o http_driver.so
+      - run: go build -buildmode=c-shared -ldflags "-s -w" -o http_driver.so
       - name: Archive Release
         uses: thedoctor0/zip-release@main
         with:
