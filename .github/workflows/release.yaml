@@ -1,0 +1,65 @@
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+name: HTTP Library Release All
+jobs:
+  delete_latest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete the "latest" Release
+        uses: dev-drprasad/delete-tag-and-release@v0.2.0
+        with:
+          tag_name: latest
+          delete_release: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  blockless_networking_release:
+    needs: delete_latest
+    strategy:
+      matrix:
+        goos: [darwin, linux, windows]
+        goarch: [amd64, arm64]
+    runs-on: ubuntu-latest
+    steps:
+      - name: set goos
+        run: echo "GOOS=${{ matrix.goos }}"
+      - name: set goarch
+        run: echo "GOARCH=${{ matrix.goarch }}"
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v3
+        with:
+          go-version: "1.18"
+          check-latest: true
+      - run: env GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -buildmode=c-shared -ldflags "-s -w" -o http_driver.so
+      - name: Archive Release
+        uses: thedoctor0/zip-release@main
+        with:
+          type: "tar"
+          directory: dist/
+          filename: ../http_driver-${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
+          path: http_driver*
+      - name: Get release
+        id: get_release
+        uses: bruceadams/get-release@v1.2.3
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: upload artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_path: http_driver-${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
+          asset_name: http_driver-${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
+          asset_content_type: application/gzip
+      - name: Publish the Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          files: http_driver-${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
+          prerelease: true
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
